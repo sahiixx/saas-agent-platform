@@ -1,0 +1,57 @@
+version: "3.9"
+
+services:
+  # ── Bus (MCP gateway + A2A routing) ──
+  bus:
+    build:
+      context: ../sahiixx-bus
+      dockerfile: Dockerfile
+    container_name: saas-platform-bus
+    ports:
+      - "9000:9000"
+    volumes:
+      - bus_data:/app/data
+    environment:
+      - LOG_LEVEL=info
+    restart: unless-stopped
+
+  # ── Ollama (local LLM, optional) ──
+  ollama:
+    image: ollama/ollama:latest
+    container_name: saas-platform-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  # ── Platform (FastAPI + Hermes Bridge) ──
+  platform:
+    build: .
+    container_name: saas-platform
+    ports:
+      - "8080:8080"
+    depends_on:
+      - bus
+      - ollama
+    volumes:
+      - platform_data:/app/data
+      - ${HOME}/.hermes:/root/.hermes:ro
+    environment:
+      - DATABASE_URL=sqlite:///./data/tenants.db
+      - BUS_URL=http://bus:9000
+      - OLLAMA_URL=http://ollama:11434
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+    restart: unless-stopped
+
+volumes:
+  bus_data:
+  ollama_data:
+  platform_data:
