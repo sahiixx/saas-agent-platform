@@ -14,7 +14,7 @@ dependencies = [
     "python-jose[cryptography]>=3.3",
     "passlib[bcrypt]>=1.7",
     "python-multipart>=0.0.9",
-    "sahiixx-bus @ file:///home/sahiix/sahiixx-bus",
+    "sahiixx-bus @ git+https://github.com/sahiixx/sahiixx-bus.git",
 ]
 
 [project.optional-dependencies]
